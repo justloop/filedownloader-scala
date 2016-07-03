@@ -150,14 +150,14 @@ class Master(workTimeout: FiniteDuration) extends PersistentActor with ActorLogg
 
     case ShutdownSystem => {
       log.info("Shutting down all workers")
-      workers.foreach {
+      /*workers.foreach {
         case (_, WorkerState(ref, _)) => ref ! PoisonPill
       }
       log.info("Shutting down all consumers")
       DistributedPubSubMediator.SendToAll(ResultsTopic, PoisonPill)
       log.info("Shutting down all system")
       context.system.terminate()
-      log.info("All shut down.")
+      log.info("All shut down.")*/
     }
   }
 
