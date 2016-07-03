@@ -81,6 +81,7 @@ class Worker(clusterClient: ActorRef, workExecutorProps: Props, registerInterval
     case ShutdownSystem =>
       workExecutor ! PoisonPill
       self ! PoisonPill
+      context.system.terminate()
   }
 
   def waitForWorkIsDoneAck(result: Any): Receive = {

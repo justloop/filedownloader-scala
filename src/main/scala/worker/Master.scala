@@ -4,6 +4,7 @@ import akka.actor.{ActorLogging, ActorRef, ActorSystem, PoisonPill, Props}
 import akka.cluster.Cluster
 import akka.cluster.client.ClusterClientReceptionist
 import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
+import akka.cluster.singleton.{ClusterSingletonProxy, ClusterSingletonProxySettings}
 import akka.persistence.PersistentActor
 
 import scala.concurrent.duration._
@@ -52,7 +53,10 @@ class Master(workTimeout: FiniteDuration) extends PersistentActor with ActorLogg
   val cleanupTask = context.system.scheduler.schedule(cleanupScheduleTime / 2, cleanupScheduleTime / 2,
     self, new CleanupTick())
 
-  override def postStop(): Unit = cleanupTask.cancel()
+  override def postStop(): Unit = {
+    cleanupTask.cancel()
+    log.info("master node shutdown")
+  }
 
   override def receiveRecover: Receive = {
     case event: WorkDomainEvent =>
@@ -164,9 +168,7 @@ class Master(workTimeout: FiniteDuration) extends PersistentActor with ActorLogg
         }
       }
 
-      self ! PoisonPill
-
-//      log.info("Shutting down all system")
+      log.info("Shutting down all system")
       context.system.terminate()
       log.info("All shut down.")
     }
