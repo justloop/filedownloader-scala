@@ -16,6 +16,7 @@ object Master {
     Props(classOf[Master], workTimeout)
 
   case class Ack(workId: String)
+  case class Reinitialize()
 
   private sealed trait WorkerStatus
   private case object Idle extends WorkerStatus
@@ -30,7 +31,6 @@ class Master(workTimeout: FiniteDuration) extends PersistentActor with ActorLogg
   import Master._
   import WorkState._
 
-  val mediator = DistributedPubSub(context.system).mediator
   ClusterClientReceptionist(context.system).registerService(self)
 
   // persistenceId must include cluster role to support multiple masters
@@ -99,7 +99,6 @@ class Master(workTimeout: FiniteDuration) extends PersistentActor with ActorLogg
         changeWorkerToIdle(workerId, workId)
         persist(WorkCompleted(workId, result)) { event ⇒
           workState = workState.updated(event)
-          mediator ! DistributedPubSubMediator.Publish(ResultsTopic, WorkResult(workId, result))
           // Ack back to original sender
           sender ! MasterWorkerProtocol.Ack(workId)
           checkJobsAllDone
@@ -112,7 +111,6 @@ class Master(workTimeout: FiniteDuration) extends PersistentActor with ActorLogg
         changeWorkerToIdle(workerId, workId)
         persist(WorkerFailed(workId)) { event ⇒
           workState = workState.updated(event)
-          mediator ! DistributedPubSubMediator.Publish(ResultsTopic, WorkResult(workId, None))
           // Ack back to original sender
           sender ! MasterWorkerProtocol.Ack(workId)
           checkJobsAllDone
@@ -133,6 +131,13 @@ class Master(workTimeout: FiniteDuration) extends PersistentActor with ActorLogg
         }
       }
 
+    case reinitialize: Reinitialize => {
+      this.workState = WorkState.empty
+      log.info("-------------------------------Initial---------------------------------")
+      log.info(workState.getStatus())
+      log.info("-----------------------------------------------------------------------")
+    }
+
     case cleanupTick:CleanupTick =>
       for ((workerId, s @ WorkerState(_, Busy(workId, timeout))) ← workers) {
         if (timeout.isOverdue) {
@@ -140,7 +145,6 @@ class Master(workTimeout: FiniteDuration) extends PersistentActor with ActorLogg
           changeWorkerToIdle(workerId, workId)
           persist(WorkerFailed(workId)) { event ⇒
             workState = workState.updated(event)
-            mediator ! DistributedPubSubMediator.Publish(ResultsTopic, WorkResult(workId, None))
             // Ack back to original sender
             sender ! MasterWorkerProtocol.Ack(workId)
             checkJobsAllDone
@@ -149,19 +153,27 @@ class Master(workTimeout: FiniteDuration) extends PersistentActor with ActorLogg
       }
 
     case ShutdownSystem => {
+      log.info("-------------------------------Summary---------------------------------")
+      log.info(workState.getStatus())
+      log.info("-----------------------------------------------------------------------")
       log.info("Shutting down all workers")
-      /*workers.foreach {
-        case (_, WorkerState(ref, _)) => ref ! PoisonPill
+      workers.foreach {
+        case (id, WorkerState(ref, _)) => {
+          log.info("shut down "+id)
+          ref ! ShutdownSystem
+        }
       }
-      log.info("Shutting down all consumers")
-      DistributedPubSubMediator.SendToAll(ResultsTopic, PoisonPill)
-      log.info("Shutting down all system")
+
+      self ! PoisonPill
+
+//      log.info("Shutting down all system")
       context.system.terminate()
-      log.info("All shut down.")*/
+      log.info("All shut down.")
     }
   }
 
   def checkJobsAllDone(): Unit = {
+    //log.info(workState.getStatus())
     if (workState.AllDone()) {
       log.info("Jobs are finished, shutting down the system...")
       context.system.scheduler.scheduleOnce(shutdownPrepareTime, self, ShutdownSystem)

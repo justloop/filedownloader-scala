@@ -25,13 +25,13 @@ object Main {
         startWorker(0)
       }
       Thread.sleep(5000)
-      startFrontend(0)
+      startProducer(0)
     } else {
       val port = args(0).toInt
       if (2000 <= port && port <= 2999)
         startBackend(port, "backend")
       else if (3000 <= port && port <= 3999)
-        startFrontend(port)
+        startProducer(port)
       else
         startWorker(port)
     }
@@ -59,13 +59,11 @@ object Main {
 
   }
 
-  def startFrontend(port: Int): Unit = {
+  def startProducer(port: Int): Unit = {
     val conf = ConfigFactory.parseString("akka.remote.netty.tcp.port=" + port).
       withFallback(ConfigFactory.load())
     val system = ActorSystem("ClusterSystem", conf)
-    val frontend = system.actorOf(Props[Frontend], "frontend")
-    system.actorOf(Props(classOf[WorkProducer], frontend), "producer")
-    system.actorOf(Props[WorkResultConsumer], "consumer")
+    system.actorOf(Props[WorkProducer], "producer")
   }
 
   def startWorker(port: Int): Unit = {

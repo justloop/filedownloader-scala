@@ -1,19 +1,12 @@
 package worker
 
 import java.util.UUID
+
 import scala.concurrent.duration._
-import akka.actor.Actor
-import akka.actor.ActorLogging
-import akka.actor.ActorRef
-import akka.actor.Props
-import akka.actor.ReceiveTimeout
-import akka.actor.Terminated
+import akka.actor.{Actor, ActorInitializationException, ActorLogging, ActorRef, DeathPactException, OneForOneStrategy, PoisonPill, Props, ReceiveTimeout, Terminated}
 import akka.cluster.client.ClusterClient.SendToAll
-import akka.actor.OneForOneStrategy
 import akka.actor.SupervisorStrategy.Stop
 import akka.actor.SupervisorStrategy.Restart
-import akka.actor.ActorInitializationException
-import akka.actor.DeathPactException
 
 object Worker {
 
@@ -45,13 +38,18 @@ class Worker(clusterClient: ActorRef, workExecutorProps: Props, registerInterval
   override def supervisorStrategy = OneForOneStrategy() {
     case _: ActorInitializationException => Stop
     case _: DeathPactException           => Stop
-    case _: Exception =>
+    case _: Exception => {
+      log.error("Exception throws in WorkerExecutor, restarting...")
       currentWorkId foreach { workId => sendToMaster(WorkFailed(workerId, workId)) }
       context.become(idle)
       Restart
+    }
   }
 
-  override def postStop(): Unit = registerTask.cancel()
+  override def postStop(): Unit = {
+    log.info("Work node shut down " + workerId)
+    registerTask.cancel()
+  }
 
   def receive = idle
 
@@ -64,6 +62,10 @@ class Worker(clusterClient: ActorRef, workExecutorProps: Props, registerInterval
       currentWorkId = Some(workId)
       workExecutor ! job
       context.become(working)
+
+    case ShutdownSystem =>
+      workExecutor ! PoisonPill
+      self ! PoisonPill
   }
 
   def working: Receive = {
@@ -75,6 +77,10 @@ class Worker(clusterClient: ActorRef, workExecutorProps: Props, registerInterval
 
     case _: Work =>
       log.info("Yikes. Master told me to do work, while I'm working.")
+
+    case ShutdownSystem =>
+      workExecutor ! PoisonPill
+      self ! PoisonPill
   }
 
   def waitForWorkIsDoneAck(result: Any): Receive = {

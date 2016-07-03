@@ -36,6 +36,7 @@ case class WorkState private (
   def isDone(workId: String): Boolean = doneWorkIds.contains(workId)
   def isFailed(workId: String): Boolean = failedWorkIds.contains(workId)
   def AllDone(): Boolean = pendingWork.isEmpty && workInProgress.isEmpty
+  def getStatus(): String = "\nPending Work: "+pendingWork.size +"\nWork In Progress: "+workInProgress.size+"\nSucess Count: "+doneWorkIds.size+"\nFail Count: "+failedWorkIds.size
 
   def updated(event: WorkDomainEvent): WorkState = event match {
     case WorkAccepted(work) ⇒
