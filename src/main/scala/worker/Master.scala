@@ -170,6 +170,7 @@ class Master(workTimeout: FiniteDuration) extends PersistentActor with ActorLogg
 
       log.info("Shutting down all system")
       context.system.terminate()
+      System.exit(0)
       log.info("All shut down.")
     }
   }
