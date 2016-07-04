@@ -129,9 +129,13 @@ class Master(workTimeout: FiniteDuration) extends Actor with ActorLogging {
         }
       }
     case workCount: WorkCount =>
-      log.info(s"Expected to recieve $workCount works")
-      workState.setWorkNum(workCount.workCount)
-      sender ! MasterWorkerProtocol.Ack(workCount.toString)
+      if(workCount.workCount < Long.MaxValue) {
+        sender() ! Master.Ack(workCount.toString)
+      } else {
+        log.info(s"Expected to recieve $workCount works")
+        workState.setWorkNum(workCount.workCount)
+        sender ! MasterWorkerProtocol.Ack(workCount.toString)
+      }
 
     case ShutdownSystem => {
       log.info("-------------------------------Summary---------------------------------")
@@ -159,6 +163,7 @@ class Master(workTimeout: FiniteDuration) extends Actor with ActorLogging {
 
   /**
     * Clear incomplete files
+    *
     * @param file
     */
   def deleteFile(file: String) {
