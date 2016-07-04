@@ -4,8 +4,7 @@ import java.net.URI
 
 import akka.actor.{Actor, ActorLogging}
 import config.JobConfig
-import worker.MasterWorkerProtocol.WorkFailed
-import worker.{DownloadTask, Worker}
+import worker.{ DownloadTask, Worker}
 
 class WorkExecutor extends Actor with ActorLogging{
   private var abstractProtocolHandler:AbstractProtocolHandler = null;

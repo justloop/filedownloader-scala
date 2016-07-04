@@ -5,6 +5,7 @@ import scala.collection.immutable.Queue
 object WorkState {
 
   def empty: WorkState = WorkState(
+    allWork = Map.empty,
     pendingWork = Queue.empty,
     workInProgress = Map.empty,
     acceptedWorkIds = Set.empty,
@@ -21,6 +22,7 @@ object WorkState {
 }
 
 case class WorkState private (
+  private val allWork: Map[String,Work],
   private val pendingWork: Queue[Work],
   private val workInProgress: Map[String, Work],
   private val acceptedWorkIds: Set[String],
@@ -36,6 +38,7 @@ case class WorkState private (
   def isDone(workId: String): Boolean = doneWorkIds.contains(workId)
   def isFailed(workId: String): Boolean = failedWorkIds.contains(workId)
   def AllDone(): Boolean = pendingWork.isEmpty && workInProgress.isEmpty
+  def getAllFailedTasks: List[Work] = allWork.filterKeys(key => failedWorkIds.contains(key)).values.toList
   def getStatus(): String = "\nPending Work: "+pendingWork.size +"\nWork In Progress: "+workInProgress.size+"\nSucess Count: "+doneWorkIds.size+"\nFail Count: "+failedWorkIds.size
 
   def updated(event: WorkDomainEvent): WorkState = event match {

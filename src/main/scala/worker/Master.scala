@@ -1,7 +1,11 @@
 package worker
 
-import akka.actor.{Actor, ActorLogging, ActorRef, PoisonPill, Props}
+import java.io.File
+
+import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import akka.cluster.client.ClusterClientReceptionist
+import config.JobConfig
+import org.apache.commons.io.FilenameUtils
 
 import scala.concurrent.duration._
 
@@ -139,9 +143,29 @@ class Master(workTimeout: FiniteDuration) extends Actor with ActorLogging {
     }
   }
 
+  def clearImcompleteFiles(): Unit = {
+    val tasks:List[Work] = workState.getAllFailedTasks
+    log.info("Total "+tasks.length+" failed tasks, clear the incomplete files...")
+    tasks.foreach(task => deleteFile(task.job.asInstanceOf[DownloadTask].url))
+  }
+
+  /**
+    * Clear incomplete files
+    * @param file
+    */
+  def deleteFile(file: String) {
+    val location = JobConfig.downloadDir+ FilenameUtils.getName(file)
+    val deleteFile = new File(location)
+    if (deleteFile.exists()) {
+      deleteFile.delete()
+    }
+  }
+
   def checkJobsAllDone(): Unit = {
     //log.info(workState.getStatus())
     if (workState.AllDone()) {
+      clearImcompleteFiles
+
       log.info("Jobs are finished, shutting down the system...")
       context.system.scheduler.scheduleOnce(shutdownPrepareTime, self, ShutdownSystem)
     }

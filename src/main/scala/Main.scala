@@ -1,7 +1,6 @@
 import java.util.UUID
 
 import akka.actor._
-import akka.util.Timeout
 import com.typesafe.config.ConfigFactory
 import config.JobConfig
 import handler.WorkExecutor
@@ -32,6 +31,7 @@ object Main {
 
   def nextWorkId(): String = UUID.randomUUID().toString
 
+  // work timeout
   def workTimeout = JobConfig.workTimeout.seconds
 
   def startMaster(system: ActorSystem): ActorRef = {
