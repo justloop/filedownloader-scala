@@ -36,6 +36,11 @@ class HTTPProtocolHandler extends AbstractProtocolHandler {
     }
   }
 
+  /**
+    * In case username and password is required to download
+    * @param username
+    * @param password
+    */
   class MyAuthenticator(var username: String, var password: String) extends Authenticator {
     override protected def getPasswordAuthentication: PasswordAuthentication = {
       val prompt: String = getRequestingPrompt

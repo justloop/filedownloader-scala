@@ -6,6 +6,11 @@ import akka.actor.{Actor, ActorLogging}
 import config.JobConfig
 import worker.{ DownloadTask, Worker}
 
+/**
+  * Created by gejun on 3/7/16.
+  *
+  * Actual work is done by this actor
+  */
 class WorkExecutor extends Actor with ActorLogging{
   private var abstractProtocolHandler:AbstractProtocolHandler = null;
 

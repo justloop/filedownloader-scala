@@ -10,4 +10,5 @@ object MasterWorkerProtocol {
   // Messages to Workers
   case object WorkIsReady
   case class Ack(id: String)
+  case object ShutdownSystem
 }

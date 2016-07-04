@@ -6,12 +6,11 @@ import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import akka.cluster.client.ClusterClientReceptionist
 import config.JobConfig
 import org.apache.commons.io.FilenameUtils
+import worker.MasterWorkerProtocol.ShutdownSystem
 
 import scala.concurrent.duration._
 
 object Master {
-
-  val ResultsTopic = "results"
 
   def props(workTimeout: FiniteDuration): Props =
     Props(classOf[Master], workTimeout)
@@ -27,6 +26,10 @@ object Master {
 
 }
 
+/**
+  * Created by gejun on 3/7/16.
+  * Master in charge of accepting tasks,  assigning tasks to workers and communicate with workers, eventually when job finish, it will delete incomplete files and shutdown the system
+  */
 class Master(workTimeout: FiniteDuration) extends Actor with ActorLogging {
   import Master._
   import WorkState._
@@ -167,7 +170,7 @@ class Master(workTimeout: FiniteDuration) extends Actor with ActorLogging {
       clearImcompleteFiles
 
       log.info("Jobs are finished, shutting down the system...")
-      context.system.scheduler.scheduleOnce(shutdownPrepareTime, self, ShutdownSystem)
+      context.system.scheduler.scheduleOnce(shutdownPrepareTime, self, MasterWorkerProtocol.ShutdownSystem)
     }
   }
 

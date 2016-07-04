@@ -5,12 +5,13 @@ import scala.collection.immutable.Queue
 object WorkState {
 
   def empty: WorkState = WorkState(
-    allWork = Map.empty,
-    pendingWork = Queue.empty,
-    workInProgress = Map.empty,
-    acceptedWorkIds = Set.empty,
-    doneWorkIds = Set.empty,
-    failedWorkIds = Set.empty)
+    allWork = Map.empty, // all the works ever received
+    pendingWork = Queue.empty, // pending works need to be done by workers
+    workInProgress = Map.empty, // work still performing by workers
+    acceptedWorkIds = Set.empty, // the workIds that has been accepted ever since
+    doneWorkIds = Set.empty, // works that has been done successfully
+    failedWorkIds = Set.empty // works that has been failed
+  )
 
   trait WorkDomainEvent
   case class WorkAccepted(work: Work) extends WorkDomainEvent

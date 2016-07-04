@@ -19,6 +19,14 @@ class AbstractProtocolHandler extends ProtocolHandler with LazyLogging{
     this.limit = limit
   }
 
+  /**
+    * Common functionality of all Protocol Handlers, read from InputStream and write to FileOutputStream According to throttled speed
+    * @param inStream
+    * @param outStream
+    * @param info
+    * @throws MalformedURLException
+    * @throws IOException
+    */
   @throws[MalformedURLException]
   @throws[IOException]
   protected def process (inStream: InputStream, outStream: FileOutputStream, info: DownloadTask) {
