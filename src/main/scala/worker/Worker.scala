@@ -4,19 +4,18 @@ import java.util.UUID
 
 import scala.concurrent.duration._
 import akka.actor.{Actor, ActorInitializationException, ActorLogging, ActorRef, DeathPactException, OneForOneStrategy, PoisonPill, Props, ReceiveTimeout, Terminated}
-import akka.cluster.client.ClusterClient.SendToAll
 import akka.actor.SupervisorStrategy.Stop
 import akka.actor.SupervisorStrategy.Restart
 
 object Worker {
 
-  def props(clusterClient: ActorRef, workExecutorProps: Props, registerInterval: FiniteDuration = 10.seconds): Props =
-    Props(classOf[Worker], clusterClient, workExecutorProps, registerInterval)
+  def props(master: ActorRef, workExecutorProps: Props, registerInterval: FiniteDuration = 10.seconds): Props =
+    Props(classOf[Worker], master, workExecutorProps, registerInterval)
 
   case class WorkComplete(result: Any)
 }
 
-class Worker(clusterClient: ActorRef, workExecutorProps: Props, registerInterval: FiniteDuration)
+class Worker(master: ActorRef, workExecutorProps: Props, registerInterval: FiniteDuration)
   extends Actor with ActorLogging {
   import MasterWorkerProtocol._
   import Worker._
@@ -24,8 +23,8 @@ class Worker(clusterClient: ActorRef, workExecutorProps: Props, registerInterval
   val workerId = UUID.randomUUID().toString
 
   import context.dispatcher
-  val registerTask = context.system.scheduler.schedule(0.seconds, registerInterval, clusterClient,
-    SendToAll("/user/master/singleton", RegisterWorker(workerId)))
+  val registerTask = context.system.scheduler.schedule(0.seconds, registerInterval, master,
+    sendToMaster(RegisterWorker(workerId)))
 
   val workExecutor = context.watch(context.actorOf(workExecutorProps, "exec"))
 
@@ -100,7 +99,7 @@ class Worker(clusterClient: ActorRef, workExecutorProps: Props, registerInterval
   }
 
   def sendToMaster(msg: Any): Unit = {
-    clusterClient ! SendToAll("/user/master/singleton", msg)
+    master ! msg
   }
 
 }
