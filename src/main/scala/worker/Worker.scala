@@ -34,6 +34,11 @@ class Worker(master: ActorRef, workExecutorProps: Props, registerInterval: Finit
     case None         => throw new IllegalStateException("Not working")
   }
 
+  override def postRestart(reason: Throwable): Unit = {
+    log.info("worker "+ workerId +" has just restarted...")
+    preStart()
+  }
+
   override def supervisorStrategy = OneForOneStrategy() {
     case _: ActorInitializationException => Stop
     case _: DeathPactException           => Stop
