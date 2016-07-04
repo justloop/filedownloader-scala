@@ -5,6 +5,7 @@ import scala.collection.immutable.Queue
 object WorkState {
 
   def empty: WorkState = WorkState(
+    workNum = Long.MaxValue,//number of expected works
     allWork = Map.empty, // all the works ever received
     pendingWork = Queue.empty, // pending works need to be done by workers
     workInProgress = Map.empty, // work still performing by workers
@@ -23,6 +24,7 @@ object WorkState {
 }
 
 case class WorkState private (
+  private var workNum: Long,
   private val allWork: Map[String,Work],
   private val pendingWork: Queue[Work],
   private val workInProgress: Map[String, Work],
@@ -32,13 +34,14 @@ case class WorkState private (
 
   import WorkState._
 
+  def setWorkNum(num: Long) = workNum=num
   def hasWork: Boolean = pendingWork.nonEmpty
   def nextWork: Work = pendingWork.head
   def isAccepted(workId: String): Boolean = acceptedWorkIds.contains(workId)
   def isInProgress(workId: String): Boolean = workInProgress.contains(workId)
   def isDone(workId: String): Boolean = doneWorkIds.contains(workId)
   def isFailed(workId: String): Boolean = failedWorkIds.contains(workId)
-  def AllDone(): Boolean = pendingWork.isEmpty && workInProgress.isEmpty
+  def AllDone(): Boolean = (doneWorkIds.size+failedWorkIds.size)==workNum
   def getAllFailedTasks: List[Work] = allWork.filterKeys(key => failedWorkIds.contains(key)).values.toList
   def getStatus(): String = "\nPending Work: "+pendingWork.size +"\nWork In Progress: "+workInProgress.size+"\nSucess Count: "+doneWorkIds.size+"\nFail Count: "+failedWorkIds.size
 

@@ -4,6 +4,7 @@ import akka.actor._
 import com.typesafe.config.ConfigFactory
 import config.JobConfig
 import handler.WorkExecutor
+import worker.Master.WorkCount
 import worker._
 
 import scala.concurrent.duration._
@@ -19,8 +20,11 @@ object Main {
       // start workers according to configurations
       startWorker(system, master, i)
     }
-    Thread.sleep(5000)
+    Thread.sleep(3000)
     val tasks = readJobsFromConfig
+    master ! new WorkCount(tasks.size.toLong)
+
+    Thread.sleep(1000)
     tasks.foreach(
       task => {
         val work = Work(nextWorkId(), task)

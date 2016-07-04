@@ -16,6 +16,7 @@ object Master {
     Props(classOf[Master], workTimeout)
 
   case class Ack(workId: String)
+  case class WorkCount(workCount: Long)
 
   private sealed trait WorkerStatus
   private case object Idle extends WorkerStatus
@@ -127,6 +128,10 @@ class Master(workTimeout: FiniteDuration) extends Actor with ActorLogging {
           checkJobsAllDone
         }
       }
+    case workCount: WorkCount =>
+      log.info(s"Expected to recieve $workCount works")
+      workState.setWorkNum(workCount.workCount)
+      sender ! MasterWorkerProtocol.Ack(workCount.toString)
 
     case ShutdownSystem => {
       log.info("-------------------------------Summary---------------------------------")
