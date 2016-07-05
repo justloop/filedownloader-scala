@@ -35,6 +35,7 @@ class ProtocolHandlerSpec extends FlatSpec
 
   override def afterAll(): Unit = {
     import scala.concurrent.ExecutionContext.Implicits.global
+    Thread.sleep(3000)
     println("Clear all files...")
     deleteFile(downloadDir+"index.html")
     deleteFile(downloadDir+"readme.txt")
