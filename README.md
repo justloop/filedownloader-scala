@@ -1,5 +1,7 @@
 # Akka master worker pattern file downloader
 
+[![Build Status](https://travis-ci.org/yuenengfanhua/filedownloader-scala.svg?branch=master)](https://travis-ci.org/yuenengfanhua/filedownloader-scala)
+
 ## Feature
 
 > Master worker pattern, workers can fail at any time, still able to proceed. Workers can work concurrently and you can specify any number of workers to absorb tasks
