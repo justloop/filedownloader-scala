@@ -129,7 +129,7 @@ class Master(workTimeout: FiniteDuration) extends Actor with ActorLogging {
         }
       }
     case workCount: WorkCount =>
-      if(workCount.workCount < Long.MaxValue) {
+      if(workState.getWorkNum < Long.MaxValue) {
         sender() ! Master.Ack(workCount.toString)
       } else {
         log.info(s"Expected to recieve $workCount works")
@@ -175,7 +175,7 @@ class Master(workTimeout: FiniteDuration) extends Actor with ActorLogging {
   }
 
   def checkJobsAllDone(): Unit = {
-    //log.info(workState.getStatus())
+    log.info(workState.getStatus())
     if (workState.AllDone()) {
       clearImcompleteFiles
 

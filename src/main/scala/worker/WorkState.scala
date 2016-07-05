@@ -35,6 +35,7 @@ case class WorkState private (
   import WorkState._
 
   def setWorkNum(num: Long) = workNum=num
+  def getWorkNum:Long = workNum
   def hasWork: Boolean = pendingWork.nonEmpty
   def nextWork: Work = pendingWork.head
   def isAccepted(workId: String): Boolean = acceptedWorkIds.contains(workId)
@@ -43,7 +44,7 @@ case class WorkState private (
   def isFailed(workId: String): Boolean = failedWorkIds.contains(workId)
   def AllDone(): Boolean = (doneWorkIds.size+failedWorkIds.size)==workNum
   def getAllFailedTasks: List[Work] = allWork.filterKeys(key => failedWorkIds.contains(key)).values.toList
-  def getStatus(): String = "\nPending Work: "+pendingWork.size +"\nWork In Progress: "+workInProgress.size+"\nSucess Count: "+doneWorkIds.size+"\nFail Count: "+failedWorkIds.size
+  def getStatus(): String = "\nTotal work: "+workNum+"\nPending Work: "+pendingWork.size +"\nWork In Progress: "+workInProgress.size+"\nSucess Count: "+doneWorkIds.size+"\nFail Count: "+failedWorkIds.size
 
   def updated(event: WorkDomainEvent): WorkState = event match {
     case WorkAccepted(work) ⇒
