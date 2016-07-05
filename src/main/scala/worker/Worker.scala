@@ -43,7 +43,7 @@ class Worker(master: ActorRef, workExecutorProps: Props, registerInterval: Finit
     case _: ActorInitializationException => Stop
     case _: DeathPactException           => Stop
     case _: Exception => {
-      log.error("Exception throws in WorkerExecutor, restarting...")
+      log.error(s"Exception throws in WorkerExecutor $workerId, restarting...")
       currentWorkId foreach { workId => sendToMaster(WorkFailed(workerId, workId)) }
       context.become(idle)
       Restart

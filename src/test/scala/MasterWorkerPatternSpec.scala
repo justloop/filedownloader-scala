@@ -22,24 +22,18 @@ object MasterWorkerPatternSpec {
     val mediator = DistributedPubSub(system).mediator
     ClusterClientReceptionist(system).registerService(self)
 
-    var i = 0
-
-    override def postRestart(reason: Throwable): Unit = {
-      i = 1
-      super.postRestart(reason)
-    }
-
     def receive = {
       case n: Int =>
-        i += 1
-        if (i == 1) throw new RuntimeException("Flaky worker")
-        if (i == 2) context.stop(self)
-
-        val n2 = n + n
-        val result = s"$n * $n = $n2"
-        sender() ! Worker.WorkComplete(result)
-        mediator ! DistributedPubSubMediator.Publish(ResultsTopic, WorkResult(s"$i", result))
-        log.info("Result sent " + i)
+        if (n <= 10) throw new RuntimeException("Flaky worker") // all workers at least failed once, still can continue
+        if (n == 11) {
+          context.stop(self)
+        } else {
+          val n2 = n + n
+          val result = s"$n + $n = $n2"
+          sender() ! Worker.WorkComplete(result)
+          mediator ! DistributedPubSubMediator.Publish(ResultsTopic, WorkResult(s"$n", result))
+          log.info("Result sent " + n)
+        }
     }
   }
 }
@@ -71,6 +65,7 @@ class MasterWorkerPatternSpec(_system: ActorSystem)
       system.actorOf(Worker.props(master, Props(new FlakyWorkExecutor(system)), 1.second), "worker-" + n)
 
     val results = TestProbe()
+    results watch master
     DistributedPubSub(system).mediator ! Subscribe(ResultsTopic, results.ref)
     expectMsgType[SubscribeAck]
 
@@ -98,9 +93,16 @@ class MasterWorkerPatternSpec(_system: ActorSystem)
     }
 
     results.within(100.seconds) {
-      val ids = results.receiveN(99).map { case WorkResult(workId, _) => workId }
+      val ids = results.receiveN(89).map { case WorkResult(workId, _) => workId }
       // nothing lost, and no duplicates
-      ids.toVector.map(_.toInt).sorted should be((3 to 100).toVector)
+      ids.toVector.map(_.toInt).sorted should be((12 to 100).toVector)
+    }
+
+    // the system should shut down by itself if all jobs are finished
+    within(10.seconds) {
+      awaitAssert(
+        results.expectTerminated(master)
+      )
     }
   }
 }

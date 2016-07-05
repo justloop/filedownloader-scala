@@ -118,6 +118,7 @@ class Master(workTimeout: FiniteDuration) extends Actor with ActorLogging {
       }
 
     case cleanupTick:CleanupTick =>
+      log.info("Checking for timeout tasks~")
       for ((workerId, s @ WorkerState(_, Busy(workId, timeout))) ← workers) {
         if (timeout.isOverdue) {
           log.info("Work timed out: {}", workId)
@@ -148,6 +149,9 @@ class Master(workTimeout: FiniteDuration) extends Actor with ActorLogging {
           ref ! ShutdownSystem
         }
       }
+
+      //cancel clean up tasks
+      cleanupTask.cancel()
 
       log.info("Shutting down all system")
       context.system.terminate()
