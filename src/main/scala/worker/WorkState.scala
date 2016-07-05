@@ -43,12 +43,13 @@ case class WorkState private (
   def isDone(workId: String): Boolean = doneWorkIds.contains(workId)
   def isFailed(workId: String): Boolean = failedWorkIds.contains(workId)
   def AllDone(): Boolean = (doneWorkIds.size+failedWorkIds.size)==workNum
-  def getAllFailedTasks: List[Work] = allWork.filterKeys(key => failedWorkIds.contains(key)).values.toList
+  def getAllFailedTasks: List[Work] = allWork.filterKeys(failedWorkIds).values.toList
   def getStatus(): String = "\nTotal work: "+workNum+"\nPending Work: "+pendingWork.size +"\nWork In Progress: "+workInProgress.size+"\nSucess Count: "+doneWorkIds.size+"\nFail Count: "+failedWorkIds.size
 
   def updated(event: WorkDomainEvent): WorkState = event match {
     case WorkAccepted(work) ⇒
       copy(
+        allWork = allWork + (work.workId -> work),
         pendingWork = pendingWork enqueue work,
         acceptedWorkIds = acceptedWorkIds + work.workId)
 

@@ -162,7 +162,10 @@ class Master(workTimeout: FiniteDuration) extends Actor with ActorLogging {
   def clearImcompleteFiles(): Unit = {
     val tasks:List[Work] = workState.getAllFailedTasks
     log.info("Total "+tasks.length+" failed tasks, clear the incomplete files...")
-    tasks.foreach(task => deleteFile(task.job.asInstanceOf[DownloadTask].url))
+    tasks.foreach(task =>
+      if(task.job.isInstanceOf[DownloadTask])
+        deleteFile(task.job.asInstanceOf[DownloadTask].url)
+    )
   }
 
   /**
