@@ -10,6 +10,9 @@ import worker.MasterWorkerProtocol.ShutdownSystem
 
 import scala.concurrent.duration._
 
+/**
+  * Created by gejun on 4/7/16.
+  */
 object Master {
 
   def props(workTimeout: FiniteDuration): Props =

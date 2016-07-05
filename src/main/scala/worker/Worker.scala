@@ -7,6 +7,9 @@ import akka.actor.{Actor, ActorInitializationException, ActorLogging, ActorRef, 
 import akka.actor.SupervisorStrategy.Stop
 import akka.actor.SupervisorStrategy.Restart
 
+/**
+  * Created by gejun on 4/7/16.
+  */
 object Worker {
 
   def props(master: ActorRef, workExecutorProps: Props, registerInterval: FiniteDuration = 10.seconds): Props =

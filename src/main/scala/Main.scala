@@ -10,6 +10,9 @@ import worker._
 import scala.concurrent.duration._
 import collection.JavaConversions._
 
+/**
+  * Created by gejun on 4/7/16.
+  */
 object Main {
 
   def main(args: Array[String]): Unit = {

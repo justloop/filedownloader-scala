@@ -2,6 +2,9 @@ package worker
 
 import scala.collection.immutable.Queue
 
+/**
+  * Created by gejun on 4/7/16.
+  */
 object WorkState {
 
   def empty: WorkState = WorkState(

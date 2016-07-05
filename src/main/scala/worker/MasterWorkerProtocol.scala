@@ -1,5 +1,8 @@
 package worker
 
+/**
+  * Created by gejun on 4/7/16.
+  */
 object MasterWorkerProtocol {
   // Messages from Workers
   case class RegisterWorker(workerId: String)
