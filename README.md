@@ -1,5 +1,7 @@
 # Akka master worker pattern file downloader
 
+Project tested in travis CI:
+
 [![Build Status](https://travis-ci.org/yuenengfanhua/filedownloader-scala.svg?branch=master)](https://travis-ci.org/yuenengfanhua/filedownloader-scala)
 
 ## Feature
